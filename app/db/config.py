@@ -7,9 +7,13 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: str
     DB_USER: str
+    SECRET_KEY: str
+    ALGORITHM: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
 
 db_link = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+algorithm = settings.ALGORITHM
+secret_key = settings.SECRET_KEY

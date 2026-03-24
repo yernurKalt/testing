@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from app.db.db import DATABASE_URL
+from app.routers.auth import router as auth_router
 
 
 app = FastAPI()
 
-@app.get("/")
-def hello_world():
-    return {"message": DATABASE_URL}
+app.include_router(auth_router)
