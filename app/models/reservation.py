@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
 
-class Reservation(Base):
+class ReservationModel(Base):
     __tablename__ = "reservations"
     id: Mapped[int] = mapped_column(primary_key=True)
     is_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)

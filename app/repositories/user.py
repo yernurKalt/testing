@@ -11,6 +11,10 @@ class UserRepo:
     async def get_user_by_username(self, session: AsyncSession, username: str) -> User | None:
         result = await session.execute(select(User).where(User.username == username))
         return (result.scalar_one_or_none())
+    
+    async def get_user_by_email(self, session: AsyncSession, email: str) -> User | None:
+        result = await session.execute(select(User).where(User.email == email))
+        return (result.scalar_one_or_none())
 
     async def add_user(self, session: AsyncSession, user: User) -> User:
         session.add(user)

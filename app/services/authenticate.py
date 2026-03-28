@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
+from jwt.exceptions import InvalidTokenError
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,7 +45,8 @@ async def get_current_user(
         username = payload.get("sub")
         if not username:
             raise credentials_exception
-    except jwt.InvalidTokenError:
+    except InvalidTokenError:
+        # Bad signature, expired token, malformed JWT, wrong algorithm, etc.
         raise credentials_exception
     user = await userRepo.get_user_by_username(session, username)
     if not user:
