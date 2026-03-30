@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 class ReservationBase(BaseModel):
-    is_confirmed: Optional[bool] = None
+    is_confirmed: bool = False
     product_id: int
 
 class ReservationCreate(ReservationBase):

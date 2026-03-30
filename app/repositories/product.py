@@ -34,3 +34,9 @@ class ProductRepo:
         product.stock -= 1
         await session.commit()
         return product
+    
+    async def increase_stock(self, session: AsyncSession, product_id: int):
+        product = await self.get_product_by_id(session, product_id)
+        product.stock += 1
+        await session.commit()
+        return product

@@ -1,3 +1,4 @@
+import re
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,8 +19,8 @@ router = APIRouter(
 
 @router.post("")
 async def add_reservation(
-    session: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
     reservation: ReservationBase
 ):
     reservation = ReservationCreate(
@@ -29,4 +30,33 @@ async def add_reservation(
     )
     reservationService = ReservationService()
     reservation = await reservationService.create_reservation(session, reservation)
-    return ReservationOut.model_validate(reservation).model_dump()
+    return reservation
+
+@router.get("/get_reservation_info")
+async def get_reservation(
+    user: Annotated[User, Depends(get_current_user)],
+    product_id: int
+):
+    reservation = ReservationCreate(
+        is_confirmed=False,
+        product_id=product_id,
+        user_id=user.id
+    )
+    reservationService = ReservationService()
+    reservation = await reservationService.get_reservation(reservation)
+    return reservation
+
+
+@router.post("/confirm")
+async def confirm(
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    reservation: ReservationBase,
+):
+    reservation = ReservationCreate(
+        user_id=user.id,
+        **reservation.model_dump()
+    )
+    reservationService = ReservationService()
+    result = await reservationService.confirm_reservation(session, reservation)
+    return ReservationOut.model_validate(result).model_dump()
