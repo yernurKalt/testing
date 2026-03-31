@@ -1,5 +1,3 @@
-from typing import Annotated
-from fastapi import Depends
 from jobify import JobRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 

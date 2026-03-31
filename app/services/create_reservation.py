@@ -15,7 +15,7 @@ class ReservationService:
         self.userRepo = UserRepo()
         self.reservationRepo = ReservationRepo()
         self.productRepo = ProductRepo()
-        self.TTL_SECONDS = 10
+        self.TTL_SECONDS = 10 #code will be improved via dishka in the future 
 
     async def _expire_reservation(self, session: AsyncSession, reservation_id: int) -> None:
         await asyncio.sleep(self.TTL_SECONDS)
