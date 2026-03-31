@@ -1,19 +1,51 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reservation import ReservationModel
-from app.schemas.reservation import ReservationBase
+from app.schemas.reservation import ReservationCreate
 
 
 class ReservationRepo:
     def __init__(self) -> None:
         pass
 
-    async def create_reservation(self, session: AsyncSession, reservation: ReservationBase):
+    async def create_reservation(self, session: AsyncSession, reservation: ReservationCreate):
         newReservation = ReservationModel(
-            is_confirmed=reservation.is_confirmed,
+            is_confirmed=False,
             user_id=reservation.user_id,
             product_id=reservation.product_id,
         )
         session.add(newReservation)
         await session.commit()
         return newReservation
+
+    async def get_reservation_by_id(self, session: AsyncSession, reservation_id: int) -> ReservationModel | None:
+        stmt = select(ReservationModel).where(ReservationModel.id == reservation_id)
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def confirm_reservation(
+        self, session: AsyncSession, reservation_id: int
+    ) -> ReservationModel | None:
+        stmt = select(ReservationModel).where(
+            ReservationModel.id == reservation_id
+        )
+        result = await session.execute(stmt)
+        db_reservation = result.scalar_one_or_none()
+        if db_reservation is None:
+            return None
+
+        db_reservation.is_confirmed = True
+        await session.commit()
+        await session.refresh(db_reservation)
+        return db_reservation
+
+    async def delete_reservation_by_id(self, session: AsyncSession, reservation_id: int) -> None:
+        stmt = select(ReservationModel).where(ReservationModel.id == reservation_id)
+        result = await session.execute(stmt)
+        db_reservation = result.scalar_one_or_none()
+        if db_reservation is None:
+            return
+
+        await session.delete(db_reservation)
+        await session.commit()

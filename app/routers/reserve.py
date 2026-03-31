@@ -35,28 +35,20 @@ async def add_reservation(
 @router.get("/get_reservation_info")
 async def get_reservation(
     user: Annotated[User, Depends(get_current_user)],
-    product_id: int
+    reservation_id: int,
+    session: Annotated[AsyncSession, Depends(get_db)]
 ):
-    reservation = ReservationCreate(
-        is_confirmed=False,
-        product_id=product_id,
-        user_id=user.id
-    )
     reservationService = ReservationService()
-    reservation = await reservationService.get_reservation(reservation)
+    reservation = await reservationService.get_reservation(session, reservation_id)
     return reservation
 
 
-@router.post("/confirm")
+@router.patch("/confirm")
 async def confirm(
     session: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
-    reservation: ReservationBase,
+    reservation_id: int,
 ):
-    reservation = ReservationCreate(
-        user_id=user.id,
-        **reservation.model_dump()
-    )
     reservationService = ReservationService()
-    result = await reservationService.confirm_reservation(session, reservation)
+    result = await reservationService.confirm_reservation(session, reservation_id)
     return ReservationOut.model_validate(result).model_dump()
