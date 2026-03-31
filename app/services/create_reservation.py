@@ -7,6 +7,7 @@ from app.repositories.product import ProductRepo
 from app.repositories.reservation import ReservationRepo
 from app.repositories.user import UserRepo
 from app.schemas.reservation import ReservationCreate
+from app.services.sched.routers.reserve import check_reservation_status
 
 
 class ReservationService:
@@ -38,7 +39,7 @@ class ReservationService:
             )
         await self.productRepo.decrease_stock(session, reservation.product_id)
         result = await self.reservationRepo.create_reservation(session, reservation)
-        asyncio.create_task(self._expire_reservation(session, result.id))
+        job = await check_reservation_status.schedule(result.id).delay(10)
 
         return result
 

@@ -6,10 +6,11 @@ from app.routers.auth import router as auth_router
 from app.routers.reserve import router as reserve_router
 from app.routers.product import router as product_router
 from app.schemas.user import UserCreate, UserOut
+from app.services.sched.main import lifespan
 from app.services.user import UserService
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router)
 app.include_router(reserve_router)
