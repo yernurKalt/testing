@@ -1,4 +1,6 @@
 from typing import Annotated
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,8 +18,9 @@ router = APIRouter(
 productService = ProductService()
 
 @router.post("/") 
+@inject
 async def create_new_product(
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: FromDishka[AsyncSession],
     product: ProductCreate,
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProductOut:
@@ -25,8 +28,9 @@ async def create_new_product(
     return ProductOut.model_validate(product).model_dump() 
 
 @router.get("/")
+@inject
 async def get_product_by_id(
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: FromDishka[AsyncSession],
     product_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
 ):

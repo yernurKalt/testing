@@ -1,5 +1,7 @@
 from datetime import timedelta
 from typing import Annotated
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,11 +19,11 @@ from app.services.user import UserService
 router = APIRouter(prefix = "/token", tags=["token"])
 
 
-
 @router.post("", response_model=Token)
+@inject
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: FromDishka[AsyncSession],
 ):
     user = await authenticate_user(session, form_data.username, form_data.password)
     if not user:
@@ -39,7 +41,8 @@ async def get(user: Annotated[User, Depends(get_current_user)]):
     return UserOut.model_validate(user).model_dump()
 
 @router.post("/register")
-async def create_user(session: Annotated[AsyncSession, Depends(get_db)], user: UserCreate) -> UserOut:
+@inject
+async def create_user(session: FromDishka[AsyncSession], user: UserCreate) -> UserOut:
     userService = UserService()
     
     return UserOut.model_validate(await userService.create_user(session, user)).model_dump()

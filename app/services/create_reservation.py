@@ -9,7 +9,6 @@ from app.repositories.product import ProductRepo
 from app.repositories.reservation import ReservationRepo
 from app.repositories.user import UserRepo
 from app.schemas.reservation import ReservationCreate
-from app.services.sched.routers.reserve import check_reservation_status
 from app.services.redis.main import r
 
 
@@ -50,6 +49,7 @@ class ReservationService:
                 {
                     "time": time.time() + self.TTL_SECONDS,
                     "product_id": result.product_id,
+                    "is_confirmed": result.is_confirmed,
                 }
             )
         )
@@ -70,6 +70,17 @@ class ReservationService:
 
     async def confirm_reservation(self, session: AsyncSession, reservation_id: int):
         db_reservation = await self.reservationRepo.confirm_reservation(session, reservation_id)
+        await r.hset(
+            "reservation",
+            str(db_reservation.id),
+            json.dumps(
+                {
+                    "time": time.time() + self.TTL_SECONDS,
+                    "product_id": db_reservation.product_id,
+                    "is_confirmed": db_reservation.is_confirmed,
+                }
+            )
+        )
         if db_reservation is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

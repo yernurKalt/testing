@@ -1,5 +1,7 @@
 import re
 from typing import Annotated
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,9 +20,10 @@ router = APIRouter(
 
 
 @router.post("")
+@inject
 async def add_reservation(
     user: Annotated[User, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: FromDishka[AsyncSession],
     reservation: ReservationBase
 ):
     reservation = ReservationCreate(
@@ -33,10 +36,11 @@ async def add_reservation(
     return reservation
 
 @router.get("/get_reservation_info")
+@inject
 async def get_reservation(
     user: Annotated[User, Depends(get_current_user)],
     reservation_id: int,
-    session: Annotated[AsyncSession, Depends(get_db)]
+    session: FromDishka[AsyncSession]
 ):
     reservationService = ReservationService()
     reservation = await reservationService.get_reservation(session, reservation_id)
@@ -44,8 +48,9 @@ async def get_reservation(
 
 
 @router.patch("/confirm")
+@inject
 async def confirm(
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: FromDishka[AsyncSession],
     user: Annotated[User, Depends(get_current_user)],
     reservation_id: int,
 ):

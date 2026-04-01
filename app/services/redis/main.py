@@ -19,7 +19,7 @@ async def background_job(r):
             reservations = await r.hgetall("reservation")
             for reservation_data in reservations:
                 reservation = json.loads(reservations[reservation_data])
-                if time.time() > float(reservation["time"]):
+                if time.time() > float(reservation["time"]) and not bool(reservation["is_confirmed"]):
 
                     await productRepo.increase_stock(session, int(reservation["product_id"]))
                     await reservationRepo.delete_reservation_by_id(session, int(reservation_data))
