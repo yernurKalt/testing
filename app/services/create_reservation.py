@@ -1,4 +1,6 @@
 import asyncio
+import json
+import time
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +10,7 @@ from app.repositories.reservation import ReservationRepo
 from app.repositories.user import UserRepo
 from app.schemas.reservation import ReservationCreate
 from app.services.sched.routers.reserve import check_reservation_status
+from app.services.redis.main import r
 
 
 class ReservationService:
@@ -39,10 +42,19 @@ class ReservationService:
             )
         await self.productRepo.decrease_stock(session, reservation.product_id)
         result = await self.reservationRepo.create_reservation(session, reservation)
-        job = await check_reservation_status.schedule(result.id).delay(10)
-
+        #job = await check_reservation_status.schedule(result.id).delay(10)
+        await r.hset(
+            "reservation",
+            str(result.id),
+            json.dumps(
+                {
+                    "time": time.time() + self.TTL_SECONDS,
+                    "product_id": result.product_id,
+                }
+            )
+        )
         return result
-
+ 
     async def get_reservation(self, session: AsyncSession, reservation_id: int):
         
         db_reservation = await self.reservationRepo.get_reservation_by_id(
