@@ -1,3 +1,4 @@
+from dishka import Provider, Scope, provide
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,3 +41,7 @@ class ProductRepo:
         product.stock += 1
         await session.commit()
         return product
+
+
+class ProductRepoProvider(Provider):
+    repo = provide(ProductRepo, scope=Scope.APP)

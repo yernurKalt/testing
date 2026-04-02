@@ -1,3 +1,4 @@
+from dishka import Provider, Scope, provide
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,3 +21,7 @@ class UserRepo:
         session.add(user)
         await session.commit()
         return user
+
+
+class UserRepoProvider(Provider):
+    provider = provide(UserRepo, scope=Scope.APP)

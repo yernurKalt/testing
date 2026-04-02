@@ -1,3 +1,4 @@
+from dishka import Provider, Scope, provide
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,3 +50,7 @@ class ReservationRepo:
 
         await session.delete(db_reservation)
         await session.commit()
+
+
+class ReservationRepoProvider(Provider):
+    repo = provide(ReservationRepo, scope=Scope.APP)

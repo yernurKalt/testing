@@ -5,6 +5,7 @@ from dishka.integrations.fastapi import setup_dishka
 from fastapi import Depends, FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.db import DATABASE_URL, dbProvider, get_db
+from app.repositories.user import UserRepoProvider
 from app.routers.auth import router as auth_router
 from app.routers.reserve import router as reserve_router
 from app.routers.product import router as product_router
@@ -28,5 +29,5 @@ async def lifespan(app: FastAPI):
     await app.state.dishka_container.close()
 
 app = create_app()
-container = make_async_container(dbProvider)
+container = make_async_container(dbProvider, UserRepoProvider())
 setup_dishka(container=container, app=app)

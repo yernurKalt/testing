@@ -4,16 +4,19 @@ import time
 import redis.asyncio as redis
 
 from app.db.db import async_session
+from app.repositories.ioc import repos_container
 from app.repositories.product import ProductRepo
 from app.repositories.reservation import ReservationRepo
 
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-productRepo = ProductRepo()
-reservationRepo = ReservationRepo()
+
+
 
 
 async def background_job(r):
+    productRepo = await repos_container.get(ProductRepo)
+    reservationRepo = await repos_container.get(ReservationRepo)
     async with async_session() as session:
         while True:
             reservations = await r.hgetall("reservation")

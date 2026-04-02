@@ -24,8 +24,9 @@ router = APIRouter(prefix = "/token", tags=["token"])
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: FromDishka[AsyncSession],
+    userRepo: FromDishka[UserRepo]
 ):
-    user = await authenticate_user(session, form_data.username, form_data.password)
+    user = await authenticate_user(session, form_data.username, form_data.password, userRepo)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
