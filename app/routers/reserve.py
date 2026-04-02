@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Annotated
 from dishka import FromDishka
@@ -33,8 +34,36 @@ async def add_reservation(
     )
     reservationService = ReservationService()
     reservation = await reservationService.create_reservation(session, reservation)
-    print(reservation.is_confirmed)
     return reservation
+
+@router.get("/all")
+@inject
+async def get_all_reservations(
+    user: Annotated[User, Depends(get_current_user)],
+    session: FromDishka[AsyncSession]
+):
+    reservationService = ReservationService()
+    reservations = await reservationService.get_all_reservations(session)
+    return [ReservationOut.model_validate(reservation).model_dump() for reservation in reservations]
+
+@router.get("/all_confirmed")
+async def get_all_confirmed_reservations(user: Annotated[User, Depends(get_current_user)]):
+    reservationService = ReservationService()
+    result = await reservationService.get_all_confirmed_reservations()
+    return result
+
+@router.get("/all_cancelled")
+async def get_all_confirmed_reservations(user: Annotated[User, Depends(get_current_user)]):
+    reservationService = ReservationService()
+    result = await reservationService.get_all_cancelled_reservations()
+    return result
+
+@router.get("/all_expired")
+async def get_all_confirmed_reservations(user: Annotated[User, Depends(get_current_user)]):
+    reservationService = ReservationService()
+    result = await reservationService.get_all_expired_reservations()
+    return result
+
 
 @router.get("/get_reservation_info")
 @inject

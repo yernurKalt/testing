@@ -14,13 +14,19 @@ class ReservationRepo:
 
     async def create_reservation(self, session: AsyncSession, reservation: ReservationCreate):
         newReservation = ReservationModel(
-            is_confirmed=reservation.is_confirmed,
             user_id=reservation.user_id,
             product_id=reservation.product_id,
         )
         session.add(newReservation)
         await session.commit()
         return newReservation
+
+    async def get_all_reservations(
+        self,
+        session: AsyncSession,
+    ):
+        result = await session.execute(select(ReservationModel))
+        return result.scalars().all()
 
     async def get_reservation_by_id(self, session: AsyncSession, reservation_id: int) -> ReservationModel | None:
         stmt = select(ReservationModel).where(ReservationModel.id == reservation_id)

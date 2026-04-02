@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+import redis.asyncio as redis
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +11,8 @@ from app.repositories.product import ProductRepo
 from app.repositories.reservation import ReservationRepo
 from app.repositories.user import UserRepo
 from app.schemas.reservation import ReservationCreate
-from app.services.redis.main import r
+from app.services.redis.main import r, redisContainer
+
 
 
 class ReservationService:
@@ -43,7 +45,6 @@ class ReservationService:
                 detail="Product ran out of stock"
             )
         await productRepo.decrease_stock(session, reservation.product_id)
-        print(reservation.is_confirmed)
         result = await reservationRepo.create_reservation(session, reservation)
         #job = await check_reservation_status.schedule(result.id).delay(10)
         await r.hset(
@@ -58,7 +59,35 @@ class ReservationService:
             )
         )
         return result
- 
+    
+    async def get_all_reservations(
+        self,
+        session: AsyncSession
+    ):
+        reservationRepo = await repos_container.get(ReservationRepo)
+        return await reservationRepo.get_all_reservations(session)
+
+    async def get_all_confirmed_reservations(self):
+        r = await redisContainer.get(redis.Redis)
+        all_confirmed_reserevations = await r.hgetall("confirmed_reservations")
+        for res in all_confirmed_reserevations:
+            all_confirmed_reserevations[res] = json.loads(all_confirmed_reserevations[res])
+        return all_confirmed_reserevations
+
+    async def get_all_cancelled_reservations(self):
+        r = await redisContainer.get(redis.Redis)
+        all_cancelled_reserevations = await r.hgetall("cancelled_reservations")
+        for res in all_cancelled_reserevations:
+            all_cancelled_reserevations[res] = json.loads(all_cancelled_reserevations[res])
+        return all_cancelled_reserevations
+
+    async def get_all_expired_reservations(self):
+        r = await redisContainer.get(redis.Redis)
+        all_expired_reserevations = await r.hgetall("expired_reservation")
+        for res in all_expired_reserevations:
+            all_expired_reserevations[res] = json.loads(all_expired_reserevations[res])
+        return all_expired_reserevations
+
     async def get_reservation_by_id(self, session: AsyncSession, reservation_id: int):
         reservationRepo = await repos_container.get(ReservationRepo)
         db_reservation = await reservationRepo.get_reservation_by_id(

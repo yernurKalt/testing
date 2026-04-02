@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+from dishka import Provider, Scope, make_async_container, provide
 import redis.asyncio as redis
 
 from app.db.db import async_session
@@ -11,7 +12,12 @@ from app.repositories.reservation import ReservationRepo
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
+class RedisProvider(Provider):
+    @provide(scope=Scope.APP)
+    async def redis(self) -> redis.Redis:
+        return r
 
+redisContainer = make_async_container(RedisProvider())
 
 
 async def background_job(r):
@@ -31,7 +37,7 @@ async def background_job(r):
                         str(reservation_data),
                         json.dumps(
                             {
-                                "is_confirmed": False
+                                "is_confirmed": None
                             }
                         )
                     )
