@@ -15,19 +15,35 @@ from app.services.redis.main import r
 
 class ReservationService:
     def __init__(self):
-        self.TTL_SECONDS = 10 #code will be improved via dishka in the future 
+        self.TTL_SECONDS = 15 #code will be improved via dishka in the future 
 
 
     async def create_reservation(self, session: AsyncSession, reservation: ReservationCreate):
         reservationRepo = await repos_container.get(ReservationRepo)
         productRepo = await repos_container.get(ProductRepo)
+        if await self.get_reservation_by_product_and_user_id(
+            session,
+            reservation.product_id,
+            reservation.user_id,
+        ):
+            
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"reservation with user id={reservation.user_id} and product id={reservation.product_id} already exists"
+            )
         product = await productRepo.get_product_by_id(session, reservation.product_id)
+        if product is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Product is not found"
+            )
         if product.stock < 1:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Product ran out of stock"
             )
         await productRepo.decrease_stock(session, reservation.product_id)
+        print(reservation.is_confirmed)
         result = await reservationRepo.create_reservation(session, reservation)
         #job = await check_reservation_status.schedule(result.id).delay(10)
         await r.hset(
@@ -37,13 +53,13 @@ class ReservationService:
                 {
                     "time": time.time() + self.TTL_SECONDS,
                     "product_id": result.product_id,
-                    "is_confirmed": result.is_confirmed,
+                    "is_confirmed": None,
                 }
             )
         )
         return result
  
-    async def get_reservation(self, session: AsyncSession, reservation_id: int):
+    async def get_reservation_by_id(self, session: AsyncSession, reservation_id: int):
         reservationRepo = await repos_container.get(ReservationRepo)
         db_reservation = await reservationRepo.get_reservation_by_id(
             session,
@@ -56,6 +72,20 @@ class ReservationService:
             )
         return db_reservation
 
+    async def get_reservation_by_product_and_user_id(
+        self,
+        session: AsyncSession,
+        product_id: int,
+        user_id: int,
+    ):
+        reservationRepo = await repos_container.get(ReservationRepo)
+        db_reservation = await reservationRepo.get_reservation_by_product_and_user_id(
+            session,
+            product_id,
+            user_id,
+        )
+        return db_reservation
+
     async def confirm_reservation(self, session: AsyncSession, reservation_id: int):
         reservationRepo = await repos_container.get(ReservationRepo)
         db_reservation = await reservationRepo.confirm_reservation(session, reservation_id)
@@ -66,7 +96,7 @@ class ReservationService:
                 {
                     "time": time.time() + self.TTL_SECONDS,
                     "product_id": db_reservation.product_id,
-                    "is_confirmed": db_reservation.is_confirmed,
+                    "is_confirmed": True,
                 }
             )
         )
@@ -76,3 +106,28 @@ class ReservationService:
                 detail=f"reservation with id {reservation_id} not found",
             )
         return db_reservation
+
+    async def delete_reservation(
+        self,
+        session: AsyncSession,
+        reservation_id: int
+    ): 
+        reservationRepo = await repos_container.get(ReservationRepo)
+        productRepo = await repos_container.get(ProductRepo)
+        deleted_reservation = await reservationRepo.get_reservation_by_id(session, reservation_id)
+        await productRepo.increase_stock(session, deleted_reservation.product_id)
+        await r.hset(
+            "reservation",
+            str(deleted_reservation.id),
+            json.dumps(
+                {
+                    "time": time.time() + self.TTL_SECONDS,
+                    "product_id": deleted_reservation.product_id,
+                    "is_confirmed": False,
+                }
+            )
+        )
+        await reservationRepo.delete_reservation_by_id(
+            session,
+            reservation_id
+        )

@@ -27,12 +27,13 @@ async def add_reservation(
     reservation: ReservationBase
 ):
     reservation = ReservationCreate(
-        is_confirmed=reservation.is_confirmed,
+        is_confirmed=None,
         product_id=reservation.product_id,
         user_id=user.id
     )
     reservationService = ReservationService()
     reservation = await reservationService.create_reservation(session, reservation)
+    print(reservation.is_confirmed)
     return reservation
 
 @router.get("/get_reservation_info")
@@ -43,7 +44,7 @@ async def get_reservation(
     session: FromDishka[AsyncSession]
 ):
     reservationService = ReservationService()
-    reservation = await reservationService.get_reservation(session, reservation_id)
+    reservation = await reservationService.get_reservation_by_id(session, reservation_id)
     return reservation
 
 
@@ -57,3 +58,14 @@ async def confirm(
     reservationService = ReservationService()
     result = await reservationService.confirm_reservation(session, reservation_id)
     return ReservationOut.model_validate(result).model_dump()
+
+@router.delete("/cancel")
+@inject
+async def cancel(
+    session: FromDishka[AsyncSession],
+    user: Annotated[User, Depends(get_current_user)],
+    reservation_id: int
+):
+    reservationService = ReservationService()
+    await reservationService.delete_reservation(session, reservation_id)
+    return {"Message": f"reservation witd id={reservation_id} was deleted"}

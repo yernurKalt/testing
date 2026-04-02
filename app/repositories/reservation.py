@@ -3,7 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reservation import ReservationModel
+from app.models.user import User
 from app.schemas.reservation import ReservationCreate
+from app.models.product import Product
 
 
 class ReservationRepo:
@@ -12,7 +14,7 @@ class ReservationRepo:
 
     async def create_reservation(self, session: AsyncSession, reservation: ReservationCreate):
         newReservation = ReservationModel(
-            is_confirmed=False,
+            is_confirmed=reservation.is_confirmed,
             user_id=reservation.user_id,
             product_id=reservation.product_id,
         )
@@ -22,6 +24,16 @@ class ReservationRepo:
 
     async def get_reservation_by_id(self, session: AsyncSession, reservation_id: int) -> ReservationModel | None:
         stmt = select(ReservationModel).where(ReservationModel.id == reservation_id)
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_reservation_by_product_and_user_id(
+        self,
+        session: AsyncSession,
+        product_id: int,
+        user_id: int,
+    ):
+        stmt = select(ReservationModel).where(ReservationModel.product_id == product_id, ReservationModel.user_id == user_id)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -50,6 +62,7 @@ class ReservationRepo:
 
         await session.delete(db_reservation)
         await session.commit()
+    
 
 
 class ReservationRepoProvider(Provider):
