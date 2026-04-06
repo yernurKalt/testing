@@ -10,7 +10,7 @@ from app.repositories.product import ProductRepo
 from app.repositories.reservation import ReservationRepo
 
 
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host='redis', port=6379, decode_responses=True)
 
 class RedisProvider(Provider):
     @provide(scope=Scope.APP)

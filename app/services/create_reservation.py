@@ -144,6 +144,11 @@ class ReservationService:
         reservationRepo = await repos_container.get(ReservationRepo)
         productRepo = await repos_container.get(ProductRepo)
         deleted_reservation = await reservationRepo.get_reservation_by_id(session, reservation_id)
+        if deleted_reservation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="such reervation does not exist"
+            )
         await productRepo.increase_stock(session, deleted_reservation.product_id)
         await r.hset(
             "reservation",

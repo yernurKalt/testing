@@ -2,11 +2,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DB_NAME: str
-    DB_PASSWORD: str
-    DB_HOST: str
-    DB_PORT: str
-    DB_USER: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: str
     SECRET_KEY: str
     ALGORITHM: str
 
@@ -14,6 +14,6 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-db_link = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+db_link = f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
 algorithm = settings.ALGORITHM
 secret_key = settings.SECRET_KEY
